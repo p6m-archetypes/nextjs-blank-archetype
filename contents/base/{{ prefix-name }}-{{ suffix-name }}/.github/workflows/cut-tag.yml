@@ -17,8 +17,8 @@ on:
 
 env:
   NODE_VERSION: "22.22.0"
-  DOCKER_REGISTRY: ${{'{'}}{ vars.ARTIFACTORY_HOSTNAME }}
-  DOCKER_REPOSITORY: ${{'{'}}{ vars.ARTIFACTORY_PROJECT }}-docker-local/applications
+  ARTIFACTORY_HOSTNAME: ${{'{'}}{ vars.ARTIFACTORY_HOSTNAME }}
+  ARTIFACTORY_TOKEN: ${{'{'}}{ secrets.ARTIFACTORY_TOKEN }}
   IMAGE_NAME: {{ prefix-name }}-{{ suffix-name }}
 
 run-name: Cut ${{'{'}}{ inputs.version-level }} tag by @${{'{'}}{ github.triggering_actor }}
@@ -66,10 +66,10 @@ jobs:
         uses: p6m-actions/docker-buildx-build-publish@v1
         with:
           image-name: ${{'{'}}{ env.IMAGE_NAME }}
-          image-tag: ${{'{'}}{ steps.cut-tag.outputs.version }}
-          registry: ${{'{'}}{ env.DOCKER_REGISTRY }}/${{'{'}}{ env.DOCKER_REPOSITORY }}
+          image-tag: ${{'{'}}{ steps.cut-tag.outputs.version || format('dev-{0}', github.sha) }}
+          registry: ${{'{'}}{ vars.ARTIFACTORY_HOSTNAME }}/${{'{'}}{ vars.ARTIFACTORY_PROJECT }}-docker-local/applications
           platforms: linux/amd64,linux/arm64
-          push: true
+          push: ${{'{'}}{ github.ref_name == 'main' }}
           skip-setup: true
           builder-name: ${{'{'}}{ steps.buildx.outputs.name }}
           secrets: |
@@ -80,11 +80,13 @@ jobs:
             artifactory-identity-token=${{'{'}}{ secrets.ARTIFACTORY_IDENTITY_TOKEN }}
 
       - name: Make Artifacts
+        if: github.ref_name == 'main'
         run: |
           echo '${{'{'}}{ steps.docker-publish.outputs.image-digest }}' | tee digest.txt
 
       - name: Create Github Release
         uses: ncipollo/release-action@v1
+        if: github.ref_name == 'main'
         with:
           name: Version ${{'{'}}{ steps.cut-tag.outputs.version }}
           tag: ${{'{'}}{ steps.cut-tag.outputs.tag }}
@@ -98,6 +100,7 @@ jobs:
 
       - name: Update Application Manifest
         uses: p6m-actions/platform-application-manifest-dispatch@v1
+        if: github.ref_name == 'main'
         with:
           repository: ${{'{'}}{ github.repository }}
           image-name: ${{'{'}}{ env.IMAGE_NAME }}
