@@ -1,21 +1,28 @@
-name: Promote Tag to Production
+name: Promote Tag
 
 on:
   workflow_dispatch:
     inputs:
+      environment:
+        description: "Target environment (stg, prd)"
+        type: choice
+        options:
+          - stg
+          - prd
+        required: true
       tag:
         description: "Tag to promote (example: v1.2.34)"
         type: string
         required: true
 
-run-name: Deploy ${{'{'}}{ inputs.tag }} to Production by @${{'{'}}{ github.triggering_actor }}
+run-name: Promote ${{'{'}}{ inputs.tag }} to ${{'{'}}{ inputs.environment }}
 
 permissions:
   contents: write
 
 jobs:
   promote:
-    name: Promote Tag to Production
+    name: Promote Tag to ${{'{'}}{ inputs.environment }}
     runs-on: ubuntu-latest
 
     steps:
@@ -24,13 +31,17 @@ jobs:
           TZ: UTC
           GH_TOKEN: ${{'{'}}{ github.token }}
           TAG: ${{'{'}}{ inputs.tag }}
+          ENVIRONMENT: ${{'{'}}{ inputs.environment }}
+          ACTOR: ${{'{'}}{ github.triggering_actor }}
         run: |
           echo "GITHUB_REPOSITORY_BASENAME=$(basename ${GITHUB_REPOSITORY})" | tee -a $GITHUB_ENV
           gh release download "$TAG" --repo ${{'{'}}{ github.repository }} --pattern "digest.txt"
-          echo "DIGEST_TO_PROMOTE=$(cat digest.txt)" | tee -a $GITHUB_ENV
+          DIGEST=$(cat digest.txt)
+          [[ "$DIGEST" =~ ^sha256:[a-f0-9]{64}$ ]] || { echo "Invalid digest format: $DIGEST"; exit 1; }
+          echo "DIGEST_TO_PROMOTE=$DIGEST" >> "$GITHUB_ENV"
           CURRENT_TIMESTAMP=$(date +'%Y-%m-%d %H:%M:%S %Z')
           gh release view "$TAG" --repo ${{'{'}}{ github.repository }} --json body -q .body > ${RUNNER_TEMP}/release_notes.md
-          echo "Released to prd by @${{'{'}}{ github.triggering_actor }} on ${CURRENT_TIMESTAMP}" >> ${RUNNER_TEMP}/release_notes.md
+          echo "Released to $ENVIRONMENT by @$ACTOR on ${CURRENT_TIMESTAMP}" >> ${RUNNER_TEMP}/release_notes.md
 
       - name: Update Application Manifest
         uses: p6m-actions/platform-application-manifest-dispatch@v1
@@ -38,7 +49,7 @@ jobs:
           repository: ${{'{'}}{ github.repository }}
           image-name: {{ prefix-name }}-{{ suffix-name }}
           directory-name: ${{'{'}}{ env.GITHUB_REPOSITORY_BASENAME }}
-          environment: prd
+          environment: ${{'{'}}{ inputs.environment }}
           digest: ${{'{'}}{ env.DIGEST_TO_PROMOTE }}
           update-manifest-token: ${{'{'}}{ secrets.UPDATE_MANIFEST_TOKEN }}
           platform-dispatch-url: ${{'{'}}{ vars.PLATFORM_DISPATCH_URL }}
