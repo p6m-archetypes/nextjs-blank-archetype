@@ -1,0 +1,24 @@
+apiVersion: meta.p6m.dev/v1alpha1
+kind: PlatformApplication
+metadata:
+  name: {{ prefix-name }}-{{ suffix-name }}
+  labels:
+    p6m.dev/app: {{ prefix-name }}-{{ suffix-name }}
+spec:
+  config:
+    PORT: "3000"
+  deployment:
+    image: {{ prefix-name }}-{{ suffix-name }}:latest
+    ports:
+      - protocol: http
+        port: 3000
+    readinessProbe:
+      port: 3000
+      path: /
+
+  networking:
+    inbound:
+      services:
+        - name: {{ prefix-name }}-{{ suffix-name }}
+          namespace: {{ prefix-name }}-{{ suffix-name }}
+          port: 3000

@@ -1,0 +1,9 @@
+---
+description: "Next.js Blank Application with pnpm and Docker"
+authors: ["Generated via AI Assistant"]
+languages: ["TypeScript", "JavaScript"]
+frameworks: ["Next.js", "React"]
+tags: ["Frontend", "Next.js", "pnpm", "Docker", "Minimal"]
+
+requires:
+  archetect: "2.0.5"
