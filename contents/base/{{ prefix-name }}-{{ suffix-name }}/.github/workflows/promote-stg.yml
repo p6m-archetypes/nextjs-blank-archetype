@@ -27,7 +27,9 @@ jobs:
         run: |
           echo "GITHUB_REPOSITORY_BASENAME=$(basename ${GITHUB_REPOSITORY})" | tee -a $GITHUB_ENV
           gh release download "$TAG" --repo ${{'{'}}{ github.repository }} --pattern "digest.txt"
-          echo "DIGEST_TO_PROMOTE=$(cat digest.txt)" | tee -a $GITHUB_ENV
+          DIGEST=$(cat digest.txt)
+          [[ "$DIGEST" =~ ^sha256:[a-f0-9]{64}$ ]] || { echo "Invalid digest format: $DIGEST"; exit 1; }
+          echo "DIGEST_TO_PROMOTE=$DIGEST" >> "$GITHUB_ENV"
           CURRENT_TIMESTAMP=$(date +'%Y-%m-%d %H:%M:%S %Z')
           gh release view "$TAG" --repo ${{'{'}}{ github.repository }} --json body -q .body > ${RUNNER_TEMP}/release_notes.md
           echo "Released to stg by @${{'{'}}{ github.triggering_actor }} on ${CURRENT_TIMESTAMP}" >> ${RUNNER_TEMP}/release_notes.md
