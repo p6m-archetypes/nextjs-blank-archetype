@@ -5,7 +5,7 @@ An [archetect](https://archetect.github.io/) archetype that scaffolds a producti
 ## What this generates
 
 - Multi-stage `Dockerfile` for Next.js standalone builds
-- GitHub Actions workflows: `build`, `cut-tag`, `promote-stg`, `promote-prd`
+- GitHub Actions workflows: `build`, `cut-tag`, `promote`
 - Kubernetes `PlatformApplication` manifests (base + dev/stg/prd overlays)
 - Next.js `.gitignore`
 
@@ -19,6 +19,7 @@ You will be prompted for:
 
 | Prompt | Example | Description |
 |--------|---------|-------------|
+| Project Author | `Jane Doe <jane@acme.com>` | Author name and email |
 | Org Name | `acme` | Organization name |
 | Solution Name | `platform` | Solution/product name |
 | Project Prefix | `dashboard` | Feature/domain name |
@@ -47,10 +48,9 @@ git push -u origin HEAD
 
 | Workflow | Trigger | Purpose |
 |----------|---------|---------|
-| `build.yml` | push to main | Build Docker image, deploy to dev |
-| `cut-tag.yml` | manual | Semantic version tag + release + deploy to prd |
-| `promote-stg.yml` | manual | Promote a tag to staging |
-| `promote-prd.yml` | manual | Promote a tag to production |
+| `build.yml` | push to `main` (or manual) | Cut patch tag, build & push multi-arch image to Artifactory, deploy to **dev** |
+| `cut-tag.yml` | manual (patch/minor/major) | Cut semver tag, build & push, create GitHub Release with image digest, deploy to **prd** |
+| `promote.yml` | manual (`environment` + `tag`) | Promote an existing release's exact digest to **stg** or **prd** (no rebuild) |
 
 ## Required GitHub Secrets & Variables
 
