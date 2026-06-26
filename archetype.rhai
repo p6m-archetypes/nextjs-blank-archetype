@@ -5,28 +5,13 @@ context += prompt("Project Author:", "author_full", #{
     placeholder: "Your Name <your.name@example.com>",
 });
 
-context += prompt("Org Name:", "org-name", #{
-  placeholder: "Acme",
+context += prompt("GitHub Organization:", "org-name", #{
+  placeholder: "acme-platform",
   cased_as: [
     CasedIdentityCasedValue(PROGRAMMING_CASES),
     FixedKeyCasedValue("org-title", TitleCase),
   ],
-  help: "Organization Name",
-});
-
-context += prompt("Solution Name:", "solution-name", #{
-  placeholder: "Platform",
-  cased_as: [
-    CasedIdentityCasedValue(PROGRAMMING_CASES),
-    FixedKeyCasedValue("solution-title", TitleCase),
-  ],
-  help: "Solution Name",
-});
-
-context += set("org-solution-name", render("{{ org-name }}-{{ solution-name }}", context), #{
-  cases: [
-    CasedIdentityCasedValue(PROGRAMMING_CASES),
-  ],
+  help: "GitHub Organization that will own the generated repository (e.g. github.com/<org>/{{ project-name }})",
 });
 
 context += prompt("Project Prefix:", "prefix-name", #{
@@ -69,10 +54,10 @@ if switch_enabled("git-init") || switch_enabled("git-publish") {
   git_init(context["project-name"], "main");
   git_add_all(context["project-name"]);
   git_commit(context["project-name"], "initial commit");
-  git_remote_add(context["project-name"], "origin", render("https://github.com/{{ org-solution-name }}/{{ project-name }}.git", context));
+  git_remote_add(context["project-name"], "origin", render("https://github.com/{{ org-name }}/{{ project-name }}.git", context));
 
   if switch_enabled("git-publish") {
-    gh_repo_create(render("{{ org-solution-name }}/{{ project-name }}", context), Private);
+    gh_repo_create(render("{{ org-name }}/{{ project-name }}", context), Private);
     git_push(context["project-name"], "origin", "main");
   }
 } else {
@@ -84,7 +69,7 @@ if switch_enabled("git-init") || switch_enabled("git-publish") {
 
   display(render("cd {{ project-name }}", context));
   display("git init -b main");
-  display(render("gh repo create {{ org-solution-name }}/{{ project-name }} --private --source=. --remote=origin", context));
+  display(render("gh repo create {{ org-name }}/{{ project-name }} --private --source=. --remote=origin", context));
   display("git add .");
   display("git commit -m 'initial commit'");
   display("git push -u origin HEAD");
