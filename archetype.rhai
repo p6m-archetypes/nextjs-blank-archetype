@@ -53,6 +53,28 @@ context += set("project-name", render("{{ prefix-name }}-{{ suffix-name }}", con
   ],
 });
 
+context += prompt("Application Framework:", "framework", #{
+  type: Select(["NextJS"]),
+  defaults_with: "NextJS",
+  help: "Frontend framework the project is built with",
+});
+
+// Framework-specific values used by the Dockerfile/README templates.
+// To add a framework: add it to the Select() options above and add an
+// `else if context.framework == "<Name>"` branch here that sets the SAME keys.
+if context.framework == "NextJS" {
+  // README bootstrap command
+  context += set("framework-bootstrap", "pnpm create next-app .");
+  // Non-root runtime user created in the Dockerfile runner stage
+  context += set("runtime-user", "nextjs");
+  // Build artifacts copied into the runner stage (Next.js standalone output)
+  context += set("framework-build-copy",
+    "COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./\n" +
+    "COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static");
+  // Entry script passed to `node` in the runner stage CMD
+  context += set("framework-entrypoint", "server.js");
+}
+
 render(Directory("contents/base"), context);
 
 //
