@@ -1,5 +1,7 @@
 # {{ project-title }}
 
+> **Repository:** This project is hosted under the [`{{ org-name }}`](https://github.com/{{ org-name }}) GitHub organization.
+
 **// TODO:** Add description of your project's business function.
 
 ## Getting Started

@@ -38,7 +38,7 @@ pnpm create next-app .
 
 # Initialize git and push
 git init -b main
-gh repo create {{ org-solution-name }}/{{ project-name }} --private --source=. --remote=origin
+gh repo create {{ org-name }}/{{ project-name }} --private --source=. --remote=origin
 git add .
 git commit -m 'initial commit'
 git push -u origin HEAD
