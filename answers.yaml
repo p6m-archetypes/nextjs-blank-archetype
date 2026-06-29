@@ -2,3 +2,4 @@
 org-name: "org-name"
 prefix-name: "prefix-name"
 suffix-name: "suffix-name"
+framework: "NextJS"

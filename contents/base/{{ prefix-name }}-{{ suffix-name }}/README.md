@@ -9,7 +9,7 @@
 ### 1. Bootstrap the Next.js application
 
 ```bash
-pnpm create next-app .
+{{ framework-bootstrap }}
 ```
 
 ### 2. Enable standalone output
