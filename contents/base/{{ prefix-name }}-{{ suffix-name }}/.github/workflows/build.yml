@@ -2,10 +2,16 @@ on:
   push:
     branches:
       - main
+      - master
+    paths-ignore:
+      - "docs/**"
+      - "README.md"
+      - "*.md"
   workflow_dispatch:
 
 permissions:
   contents: write
+  id-token: write
 
 name: Build
 
@@ -30,7 +36,7 @@ jobs:
 
       - name: Cut Patch Version
         id: cut-patch
-        uses: p6m-actions/js-pnpm-cut-tag@v1
+        uses: p6m-actions/js-pnpm-cut-tag@v2
         with:
           version-level: patch
 
@@ -62,6 +68,23 @@ jobs:
             artifactory-token=${{'{'}}{ secrets.ARTIFACTORY_TOKEN }}
             artifactory-username=${{'{'}}{ secrets.ARTIFACTORY_USERNAME }}
             artifactory-identity-token=${{'{'}}{ secrets.ARTIFACTORY_IDENTITY_TOKEN }}
+
+      - name: Make Artifacts
+        run: |
+          echo '${{'{'}}{ steps.docker-publish.outputs.image-digest }}' | tee digest.txt
+
+      - name: Create Github Release
+        uses: ncipollo/release-action@v1
+        with:
+          name: Version ${{'{'}}{ steps.cut-patch.outputs.version }}
+          tag: ${{'{'}}{ steps.cut-patch.outputs.tag }}
+          makeLatest: true
+          artifacts: "digest.txt"
+          removeArtifacts: true
+          generateReleaseNotes: true
+          body: |
+            Application version: `${{'{'}}{ steps.cut-patch.outputs.version }}`
+            Docker image digest: `${{'{'}}{ steps.docker-publish.outputs.image-digest }}`
 
       - name: Update Application Manifest
         uses: p6m-actions/platform-application-manifest-dispatch@v1
